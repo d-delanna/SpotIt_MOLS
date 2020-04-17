@@ -1,5 +1,6 @@
 import itertools
 from copy import deepcopy
+
 import numpy as np
 
 
@@ -92,7 +93,8 @@ class Check:
         self.tables = tables
         self.size = len(tables[0])
 
-    def __flatten(self, table):
+    @staticmethod
+    def __flatten(table):
         return list(itertools.chain.from_iterable(table))
 
     def compiler(self, *tables):
