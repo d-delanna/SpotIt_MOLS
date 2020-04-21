@@ -38,7 +38,7 @@ class MOLSToSpotIt(Table):
         for line in group:
             for i in range(self.size):
                 line[i] = line[i] + (self.size+2) + (self.size*i)
-            line.insert(0, group_num)
+            line.insert(0, group_num)  # put group_num on every card in group
         return group
         
     def __full_game(self):
@@ -53,7 +53,7 @@ class MOLSToSpotIt(Table):
         group1 = [[1] + list(line) for line in np.array(group2).T[1:]]
 
         game = [start_card, group1, group2]
-        for i, mol in enumerate(self.mols):
+        for i, mol in enumerate(self.mols):  # remaining groups 3 through N
             game += [self.__convert_to_spotit(mol, i+3)]
         return game
     
@@ -62,7 +62,7 @@ class MOLSToSpotIt(Table):
         print("SpotIt Game")
         return repr(Table(tuple(self.game)))
         
-    def str_group(self, group_num):
+    def group(self, group_num):
         """ return: string of single group """
         print("Group", group_num)
         return repr(Table(tuple([self.game[group_num]])))
@@ -88,19 +88,19 @@ class SpotItToMOLS(Table):
         return latin_square
     
     def __compile_mols(self):
-        """ return: type list (depth-3) of ints: """
+        """ return: mols: type list (depth-3) of ints: list of latin squares """
         mols = [self.__convert_to_ls(self.game[i]) for i in range(len(self.game))]
         return mols
     
     def __str__(self):
         """ return: string of all mols """
         print("MOLS(" + str(self.size) + ")")
-        return repr(Table(tuple(self.mols)))   
+        return repr(Table(tuple(self.mols)))
     
 class Check:
     """ 
     Different tests to verify if nxn tables are MOLS.
-    param: tables: type< list(list(ints)) >: supposed latin squares 
+    param: tables: type list (depth-2) of ints : supposed latin squares 
     """
     
     def __init__(self, *tables):
@@ -114,11 +114,11 @@ class Check:
     def __flatten(table):
         return [tab for tab in itertools.chain.from_iterable(table)]
         
-    def __compile(self, *tables):
+    def __compile(self, tables):
         """ 
         Superimposes all tables onto each other. 
-        param: tables: list of n tables
-        return: compiled_table: list of length-n tuples
+        param: tables: tuple of n tables
+        return: compiled_table: list of (length-n) tuples
         """
         compiled_table = []
         for i in range(self.size):
@@ -126,13 +126,14 @@ class Check:
         return self.__flatten(compiled_table)
     
     def __repeated_pairs(self, pairs_list):
-        """ Prints out all repeated pairs of a pairs list
-            and its coordinates in relation to the non-compiled nxn table"""
+        """ Prints out all repeated pairs of a pairs list,
+            and its coordinates in relation to the non-compiled nxn table.
+            Top left starts at (0,0)."""
         pairs = deepcopy(pairs_list)
         for pair in self.unique_pairs:
             if pairs.count(pair) > 1:  # if a pair is repeated
-                idx_repeat_pairs = [idx for idx in range(len(pairs)) if pair == pairs[idx]]
-                coord_repeat_pairs = [(idx % self.size, idx // self.size) for idx in idx_repeat_pairs]
+                idx_repeat_pairs = [idx for idx in range(len(pairs)) if pair == pairs[idx]]  # place in list
+                coord_repeat_pairs = [(idx % self.size, idx // self.size) for idx in idx_repeat_pairs]  # place in table
                 print("Repeated {} at (row, column): {}".format(pair, coord_repeat_pairs))
     
     @staticmethod
@@ -141,7 +142,7 @@ class Check:
         square = deepcopy(table)
         for row in square:
             if len(row) != len(set(row)):
-                print("First repeated number in row {}".format(square.index(row)))
+                print("First repeated number in row {}".format(square.index(row)))  # (top left starts at (0,0))
                 return False
         print("No repeated numbers in rows.")
         
@@ -153,21 +154,32 @@ class Check:
         print("No repeated numbers in columns.")
         return True
     
-    def is_orthogonal(self, table1, table2):
+    def are_orthogonal(self, table1, table2):
         """ Checks if two latin squares form Graeco-Latin square. """
-        table = self.__compile(table1, table2)
+        table = self.__compile((table1, table2))
         if len(table) == len(set(table)):
+            print("Latin squares are orthogonal.")
             return True
         self.__repeated_pairs(table)
         return False
         
-    def is_mutually_orthog(self):
+    def are_mutually_orthog(self):
         """ Checks if all squares are mutually orthogonal latin squares. """
-        for table in self.tables:
+        mutually_orthog = True
+        
+        # checks if all squares are latin squares
+        for table in self.tables: 
+            print("\nChecking Latin Square", self.tables.index(table)+1)
             if not self.is_latin_square(table):
-                return False
-        orthog = [self.is_orthogonal(table[0], table[1]) for table in itertools.combinations(self.tables, 2)]
-        if False in orthog:
-            return False
-        return True               
-
+                mutually_orthog = False
+        
+        # checks if every combinations of the LSs are orthogonal to each other
+        labeled_tables = [(table, label+1) for label, table in enumerate(self.tables)]
+        combination_pairs = itertools.combinations(labeled_tables, 2)
+        for pair in combination_pairs:
+            print("\nChecking Orthogonality of Latin Squares", (pair[0][1], pair[1][1]))
+            orthog = self.are_orthogonal(pair[0][0], pair[1][0])
+            if not orthog:
+                mutually_orthog = False
+                
+        return mutually_orthog
