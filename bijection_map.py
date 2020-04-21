@@ -1,9 +1,18 @@
-import math
 import numpy as np
 import itertools 
 from copy import deepcopy
 
-class MOLSToSpotIt:   
+class Table(list):
+    """ Base class. Aids in print formatting. """
+    def __init__(self, tables):
+        super(Table, self).__init__(tables)
+
+    def __repr__(self):
+        for i in range(len(self)):
+            self[i] = "\n".join(str(row) for row in self[i]) + "\n"
+        return "\n".join(str(table) for table in self)
+
+class MOLSToSpotIt(Table):   
     """ 
     Converts a set of MOLS (mutually orthogonal latin squares)
     of any size and converts them to SpotIt! cards.
@@ -15,6 +24,7 @@ class MOLSToSpotIt:
         self.mols = mols
         self.size = len(mols[0])  # size mols = num elements per card - 1
         self.game = self.__full_game()
+        Table.__init__(self, tuple(self.game))
         
     def __convert_to_spotit(self, latin_square, group_num):
         """ 
@@ -27,7 +37,7 @@ class MOLSToSpotIt:
         group = deepcopy(latin_square)
         for line in group:
             for i in range(self.size):
-                line[i] = line[i] + (self.size+2) + self.size*i
+                line[i] = line[i] + (self.size+2) + (self.size*i)
             line.insert(0, group_num)
         return group
         
@@ -50,20 +60,14 @@ class MOLSToSpotIt:
     def __str__(self):
         """ return: string of full SpotIt! game """
         print("SpotIt Game")
-        print_game = []
-        for group in self.full_game():
-            print_game += [str(line) + "\n" for line in group] + ["\n"]
-        return "".join(print_game)
+        return repr(Table(tuple(self.game)))
         
-    def print_group(self, group_num):
-        """ prints single group """
+    def str_group(self, group_num):
+        """ return: string of single group """
         print("Group", group_num)
-        for line in self.full_game()[group_num]:
-            print(line)
-        print("\n")
-
+        return repr(Table(tuple([self.game[group_num]])))
         
-class SpotItToMOLS:
+class SpotItToMOLS(Table):
     """ 
     Conversion from SpotIt! game to its generating MOLS.
     param: game: type list (depth-3) of ints: [Starting Card, Group_1, ..., Group_N]
@@ -73,13 +77,14 @@ class SpotItToMOLS:
         self.game = game[3:]
         self.size = len(self.game[0])  # number of elements on a card
         self.mols = self.__compile_mols()
+        Table.__init__(self, tuple(self.mols))
         
     def __convert_to_ls(self, group):
         """ 
         Takes a SpotIt! group and returns its latin square generator
         param: group: type list (depth-2) of ints: SpotIt! cards that have the same group number
         """
-        latin_square = [[(num - (self.size+2) - self.size*i) for i, num in enumerate(line[1:])] for line in group]
+        latin_square = [[(num - (self.size+2) - (self.size*i)) for i, num in enumerate(line[1:])] for line in group]
         return latin_square
     
     def __compile_mols(self):
@@ -90,11 +95,7 @@ class SpotItToMOLS:
     def __str__(self):
         """ return: string of all mols """
         print("MOLS(" + str(self.size) + ")")
-        print_mols = []
-        for mol in self.mols:
-            print_mols += [str(line) + "\n" for line in mol] + ["\n"]
-        return "".join(print_mols)
-    
+        return repr(Table(tuple(self.mols)))   
     
 class Check:
     """ 
@@ -107,7 +108,7 @@ class Check:
         self.size = len(tables[0]) 
         self.unique_pairs = self.__flatten([[(i, j) for i in range(10)] for j in range(10)])
         self.unique_nums = [i for i in range(self.size)]
-        self.compiled = self.__compile(self, self.tables)
+        self.compiled = self.__compile(tables)
     
     @staticmethod
     def __flatten(table):
@@ -121,9 +122,8 @@ class Check:
         """
         compiled_table = []
         for i in range(self.size):
-            for table in itertools.zip_longest(*[table[i] for table in tables]):
-                compiled_table += [table]
-        return compiled_table
+            compiled_table += [list(itertools.zip_longest(*[_table[i] for _table in tables]))]
+        return self.__flatten(compiled_table)
     
     def __repeated_pairs(self, pairs_list):
         """ Prints out all repeated pairs of a pairs list
@@ -169,5 +169,5 @@ class Check:
         orthog = [self.is_orthogonal(table[0], table[1]) for table in itertools.combinations(self.tables, 2)]
         if False in orthog:
             return False
-        return True        
+        return True               
 
