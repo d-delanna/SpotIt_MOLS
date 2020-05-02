@@ -129,11 +129,13 @@ class Check:
         """ Prints out all repeated pairs of a pairs list,
             and its coordinates in relation to the non-compiled nxn table.
             Top left starts at (0,0)."""
-        pairs = deepcopy(pairs_list)
-        for pair in self.unique_pairs:
-            if pairs.count(pair) > 1:  # if a pair is repeated
-                idx_repeat_pairs = [idx for idx in range(len(pairs)) if pair == pairs[idx]]  # place in list
-                coord_repeat_pairs = [(idx % self.size, idx // self.size) for idx in idx_repeat_pairs]  # place in table
+        pair_index_map = defaultdict(list)
+        for idx, pair in enumerate(pairs_list):
+            pair_index_map[pair].append(idx)
+        for pair in pair_index_map:
+            indices = pair_index_map[pair]
+            if len(indices) > 1:
+                coord_repeat_pairs = [(idx % self.size, idx // self.size) for idx in indices]
                 print("Repeated {} at (row, column): {}".format(pair, coord_repeat_pairs))
     
     @staticmethod
