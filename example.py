@@ -56,6 +56,8 @@ ls3 = [
 # -------------------------------------------------------------------------------------------
 
 game = MOLSToSpotIt(ls1, ls2)
+# // note that this is not a complete game
+# // because we do not have 9 MOLS(10)
 
 print(game)
 
