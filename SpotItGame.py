@@ -7,11 +7,7 @@ class Table(list):
     def __init__(self, tables):
         super(Table, self).__init__(tables)
 
-    def __repr__(self):
-        for i in range(len(self)):
-            self[i] = "\n".join(str(row) for row in self[i]) + "\n"
-        return "\n".join(str(table) for table in self)
-
+# hello world
 class MOLSToSpotIt(Table):   
     """ 
     Converts a set of MOLS (mutually orthogonal latin squares)
